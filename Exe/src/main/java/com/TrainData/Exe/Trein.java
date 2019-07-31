@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Table(name = "Trein")
 public class Trein {
@@ -15,13 +17,15 @@ public class Trein {
 	private String naam;
 	
 	private String origin;
-	private ArrayList<LocalDateTime> geplandeAankomsten;
-	private ArrayList<LocalDateTime> werkelijkeAankomsten;
-	private ArrayList<Station> stations;
+	private Station[] stations;
+	private LocalDateTime[] geplandeAankomsten;
+	private LocalDateTime[] werkelijkeAankomsten;
+
+
 
 	// CONSTRUCTORS
-	public Trein(String naam, String origin, ArrayList<LocalDateTime> geplandeAankomsten,
-			ArrayList<LocalDateTime> werkelijkeAankomsten, ArrayList<Station> station) {
+	public Trein(String naam, String origin, LocalDateTime[] geplandeAankomsten,
+			LocalDateTime[] werkelijkeAankomsten, Station[] station) {
 		this.naam = naam;
 		this.origin = origin;
 		this.geplandeAankomsten = geplandeAankomsten;
@@ -44,43 +48,43 @@ public class Trein {
 	public void setOrigin(String origin) {
 		this.origin = origin;
 	}
-
-	public ArrayList<LocalDateTime> getGeplandeAankomsten() {
-		return geplandeAankomsten;
-	}
-
-	public void setGeplandeAankomsten(ArrayList<LocalDateTime> geplandeAankomsten) {
-		this.geplandeAankomsten = geplandeAankomsten;
-	}
 	
-	public void setSingleGeplandeAankomsten(LocalDateTime geplandeAankomsten, int i) {
-		this.geplandeAankomsten.set(i,geplandeAankomsten);
-	}
-
-	public ArrayList<LocalDateTime> getWerkelijkeAankomsten() {
-		return werkelijkeAankomsten;
-	}
-
-	public void setWerkelijkeAankomsten(ArrayList<LocalDateTime> werkelijkeAankomsten) {
-		this.werkelijkeAankomsten = werkelijkeAankomsten;
-	}
-	
-	public void setSingleWerkelijkeAankomsten(int i, LocalDateTime geplandeAankomsten) {
-		this.geplandeAankomsten.set(i,geplandeAankomsten);
-	}
-
-	public ArrayList<Station> getStations() {
+	public Station[] getStations() {
 		return stations;
 	}
 
-	public void setStations(ArrayList<Station> stations) {
+	public void setStations(Station[] stations) {
 		this.stations = stations;
 	}
+
+	public LocalDateTime[] getGeplandeAankomsten() {
+		return geplandeAankomsten;
+	}
+
+	public void setGeplandeAankomsten(LocalDateTime[] geplandeAankomsten) {
+		this.geplandeAankomsten = geplandeAankomsten;
+	}
 	
+	public void setSingleGeplandeAankomsten(int i, LocalDateTime geplandeAankomsten) {
+		this.geplandeAankomsten[i] = geplandeAankomsten;
+	}
+
+	public LocalDateTime[] getWerkelijkeAankomsten() {
+		return werkelijkeAankomsten;
+	}
+
+	public void setWerkelijkeAankomsten(LocalDateTime[] werkelijkeAankomsten) {
+		this.werkelijkeAankomsten = werkelijkeAankomsten;
+	}
+	
+	public void setSingleWerkelijkeAankomsten(int i, LocalDateTime werkelijkeAankomsten) {
+		this.werkelijkeAankomsten[i] = werkelijkeAankomsten;
+	}
+
 	public boolean getTeLaat(String station) {
-		for(int i = 0; i < stations.size(); i++) {
-			if(stations.get(i).getNaam().equals(station)) {
-				return geplandeAankomsten.get(i).isBefore(werkelijkeAankomsten.get(i));
+		for(int i = 0; i < stations.length; i++) {
+			if(stations[i].getNaam().equals(station)) {
+				return geplandeAankomsten[i].isBefore(werkelijkeAankomsten[i]);
 			}
 		}
 		return false;

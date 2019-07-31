@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.TimerTask;
 
 import org.springframework.http.*;
@@ -24,7 +23,7 @@ public class Updater extends TimerTask {
 	
 	//HANDLES ALL THE FUNCTIONS NEEDED TO GET TRAIN DATA AND SEND IT TO OUR OWN DATABASE
 	void updateAlleTreinen(LocalDateTime time, String station) {
-		ArrayList<Trein> trein;
+		Trein[] trein;
 		Arrivals[] arrivals = CRUDStationTreinen(time, station);
 		trein = this.station.getTreinen();
 		trein = handelUpdatesEnNieuweTreinen(arrivals,trein);
@@ -32,20 +31,24 @@ public class Updater extends TimerTask {
 	}
 	
 	//CONTROLS ALL THE TRAINS IT FOUND FROM THE NS API AND SHOWS IF THEY ARE NEW TO THE PROGRAM AND WEITHER THEIR TIMES HAVE BEEN UPDATED
-	private ArrayList<Trein> handelUpdatesEnNieuweTreinen(Arrivals[] arrivals, ArrayList<Trein> trein){
+	private Trein[] handelUpdatesEnNieuweTreinen(Arrivals[] arrivals, Trein[] trein){
+		if(trein == null) {
+			trein = new Trein[1];
+			trein[0] = new Trein("demo Trein", "demo Origin", new LocalDateTime[] {LocalDateTime.now()}, new LocalDateTime[] {LocalDateTime.now()}, new Station[] {new Station("demo Station")});
+		}
 		boolean updates = false;
 		for (int i = 0; i < arrivals.length; i++) {
-			if (trein.size() > 0) {
+			if (!trein[0].getNaam().equals("demo Trein")) {
 				boolean nieuweTrein = true;
-				for (int j = 0; j < trein.size(); j++) {
-					if (arrivals[i].getName().equals(trein.get(j).getNaam())
-							&& arrivals[i].getOrigin().equals(trein.get(j).getOrigin())) {
+				for (int j = 0; j < trein.length; j++) {
+					if (arrivals[i].getName().equals(trein[j].getNaam())
+							&& arrivals[i].getOrigin().equals(trein[j].getOrigin())) {
 						/* check if the actualDateTime still matches, else update */
 						nieuweTrein = false; /* Een bekende trein gevonden */
-						if(trein.get(j).getWerkelijkeAankomsten().get(0).compareTo(LocalDateTime.parse(arrivals[i].getActualDateTime())) > 0) {
+						if(trein[j].getWerkelijkeAankomsten()[0].compareTo(LocalDateTime.parse(arrivals[i].getActualDateTime())) > 0) {
 						updates = true;
-						systemOutUpdate(trein.get(j), arrivals[i]);
-						trein.get(j).setSingleWerkelijkeAankomsten(0,LocalDateTime.parse(arrivals[i].getActualDateTime()));
+						systemOutUpdate(trein[j], arrivals[i]);
+						trein[j].setSingleWerkelijkeAankomsten(0,LocalDateTime.parse(arrivals[i].getActualDateTime()));
 						}
 					}
 				}
@@ -53,12 +56,31 @@ public class Updater extends TimerTask {
 					/* nieuwe trein */
 					updates = true;
 					systemOutNieuwTrein(arrivals[i]);
-					trein.add(addNewTrain(arrivals[i]));
+					Trein[] treinen = new Trein[trein.length+1];
+					for(int n = 0; n < treinen.length; n++) {
+						if(n<trein.length) {
+						treinen[n] = trein[n];
+						} else {
+							treinen[n] = addNewTrain(arrivals[i]);
+						}
+					}
+					trein = treinen;
+					//trein.add(addNewTrain(arrivals[i]));
 				}
 			} else {
 				updates = true;
 				systemOutNieuwTrein(arrivals[i]);
-				trein.add(addNewTrain(arrivals[i]));
+				
+				Trein[] treinen = new Trein[trein.length+1];
+				for(int n = 0; n < treinen.length; n++) {
+					if(n<trein.length) {
+					treinen[n] = trein[n];
+					} else {
+						treinen[n] = addNewTrain(arrivals[i]);
+					}
+				}
+				trein = treinen;
+				//trein.add(addNewTrain(arrivals[i]));
 			}
 
 		}
@@ -87,12 +109,12 @@ public class Updater extends TimerTask {
 	
 	//MAKES A NEW TRAIN OBJECT, CAN BE USED TO ADD TO A ARRAYLIST
 	private Trein addNewTrain(Arrivals arrival) {
-		ArrayList<LocalDateTime> arrivalPlannedDateTime = new ArrayList<>();
-		ArrayList<LocalDateTime> arrivalActualDateTime = new ArrayList<>();
-		ArrayList<Station> localStation = new ArrayList<>();
-		arrivalPlannedDateTime.add(LocalDateTime.parse(arrival.getPlannedDateTime()));
-		arrivalActualDateTime.add(LocalDateTime.parse(arrival.getActualDateTime()));
-		localStation.add(new Station(myStation));
+		LocalDateTime[] arrivalPlannedDateTime = new LocalDateTime[1];
+		LocalDateTime[] arrivalActualDateTime = new LocalDateTime[1];
+		Station[] localStation = new Station[1];
+		arrivalPlannedDateTime[0] = LocalDateTime.parse(arrival.getPlannedDateTime());
+		arrivalActualDateTime[0] = LocalDateTime.parse(arrival.getActualDateTime());
+		localStation[0]= new Station(myStation);
 		Trein trein = new Trein(arrival.getName(), arrival.getOrigin(), arrivalPlannedDateTime, arrivalActualDateTime, localStation);
 		CRUDPostTreinNaarDatabase(trein);
 		return trein;
@@ -102,7 +124,7 @@ public class Updater extends TimerTask {
 	private void systemOutUpdate(Trein trein, Arrivals arrivals) {
 		System.out.print("Update: ");
 		System.out.print("Origin: " + arrivals.getOrigin());
-		System.out.print(" previous ActualDateTime: " + trein.getWerkelijkeAankomsten().get(0));
+		System.out.print(" previous ActualDateTime: " + trein.getWerkelijkeAankomsten()[0]);
 		System.out.println(" new ActualDateTime: "+arrivals.getActualDateTime());
 		systemOutTreinTeLaat(arrivals);
 	}
