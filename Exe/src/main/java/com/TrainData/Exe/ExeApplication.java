@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ExeApplication {
 	static Timer timer = new Timer();
 	public static void main(String[] args) {
-		timer.schedule(new Updater(), 0, 1000*60);
+		timer.schedule(new Updater(), 0, 1000*15);
 	}
 
 }
