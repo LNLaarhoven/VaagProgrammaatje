@@ -1,10 +1,8 @@
 package com.TrainData.Exe;
 
 import com.TrainData.JSON.*;
-import com.google.gson.Gson;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.TimerTask;
 
 import org.springframework.http.*;
@@ -18,11 +16,11 @@ public class Updater extends TimerTask {
 
 	//RUNS THIS FUNCTION WITH A SCEDULED TIMERTASK, ACTIVATION EVERY *** MILLIS
 	public void run() {
-		updateAlleTreinen(LocalDateTime.now(), myStation);
+		updateAlleTreinen(LocalDateTime.now().toString(), myStation);
 	}
 	
 	//HANDLES ALL THE FUNCTIONS NEEDED TO GET TRAIN DATA AND SEND IT TO OUR OWN DATABASE
-	void updateAlleTreinen(LocalDateTime time, String station) {
+	void updateAlleTreinen(String time, String station) {
 		Trein[] trein;
 		Arrivals[] arrivals = CRUDStationTreinen(time, station);
 		trein = this.station.getTreinen();
@@ -34,7 +32,7 @@ public class Updater extends TimerTask {
 	private Trein[] handelUpdatesEnNieuweTreinen(Arrivals[] arrivals, Trein[] trein){
 		if(trein == null) {
 			trein = new Trein[1];
-			trein[0] = new Trein("demo Trein", "demo Origin", new LocalDateTime[] {LocalDateTime.now()}, new LocalDateTime[] {LocalDateTime.now()}, new Station[] {new Station("demo Station")});
+			trein[0] = new Trein("demo Trein", "demo Origin", new String[] {LocalDateTime.now().toString()}, new String[] {LocalDateTime.now().toString()});
 		}
 		boolean updates = false;
 		for (int i = 0; i < arrivals.length; i++) {
@@ -45,10 +43,10 @@ public class Updater extends TimerTask {
 							&& arrivals[i].getOrigin().equals(trein[j].getOrigin())) {
 						/* check if the actualDateTime still matches, else update */
 						nieuweTrein = false; /* Een bekende trein gevonden */
-						if(trein[j].getWerkelijkeAankomsten()[0].compareTo(LocalDateTime.parse(arrivals[i].getActualDateTime())) > 0) {
+						if(LocalDateTime.parse(trein[j].getWerkelijkeAankomsten()[0]).compareTo(LocalDateTime.parse(arrivals[i].getActualDateTime())) > 0) {
 						updates = true;
 						systemOutUpdate(trein[j], arrivals[i]);
-						trein[j].setSingleWerkelijkeAankomsten(0,LocalDateTime.parse(arrivals[i].getActualDateTime()));
+						trein[j].setWerkelijkeAankomsten(new String[] {arrivals[i].getActualDateTime()});
 						}
 					}
 				}
@@ -91,7 +89,7 @@ public class Updater extends TimerTask {
 	}
 	
 	//GETS ALL THE TRAINS IN THE COMING 2 HOURS FROM THE NS API (REQUIRES OBJECTS TO FIT THE INCOMING DATA)
-	private Arrivals[] CRUDStationTreinen(LocalDateTime time, String station) {
+	private Arrivals[] CRUDStationTreinen(String time, String station) {
 		// HTTP GET REQUIREMENTS
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
@@ -109,13 +107,13 @@ public class Updater extends TimerTask {
 	
 	//MAKES A NEW TRAIN OBJECT, CAN BE USED TO ADD TO A ARRAYLIST
 	private Trein addNewTrain(Arrivals arrival) {
-		LocalDateTime[] arrivalPlannedDateTime = new LocalDateTime[1];
-		LocalDateTime[] arrivalActualDateTime = new LocalDateTime[1];
+		String[] arrivalPlannedDateTime = new String[1];
+		String[] arrivalActualDateTime = new String[1];
 		Station[] localStation = new Station[1];
-		arrivalPlannedDateTime[0] = LocalDateTime.parse(arrival.getPlannedDateTime());
-		arrivalActualDateTime[0] = LocalDateTime.parse(arrival.getActualDateTime());
+		arrivalPlannedDateTime[0] = arrival.getPlannedDateTime();
+		arrivalActualDateTime[0] = arrival.getActualDateTime();
 		localStation[0]= new Station(myStation);
-		Trein trein = new Trein(arrival.getName(), arrival.getOrigin(), arrivalPlannedDateTime, arrivalActualDateTime, localStation);
+		Trein trein = new Trein(arrival.getName(), arrival.getOrigin(), arrivalPlannedDateTime, arrivalActualDateTime);
 		CRUDPostTreinNaarDatabase(trein);
 		return trein;
 	}
