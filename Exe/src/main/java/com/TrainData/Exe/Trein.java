@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 
@@ -17,6 +18,9 @@ public class Trein {
 	private String origin;
 	private String[] geplandeAankomsten;
 	private String[] werkelijkeAankomsten;
+	
+	@ManyToOne
+	private Station station;
 
 
 
@@ -31,6 +35,7 @@ public class Trein {
 		this.origin = origin;
 		this.geplandeAankomsten = geplandeAankomsten;
 		this.werkelijkeAankomsten = werkelijkeAankomsten;
+		this.station = new Station("ASD");
 	}
 
 	public String getNaam() {

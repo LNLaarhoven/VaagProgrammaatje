@@ -1,8 +1,12 @@
 package com.TrainData.Exe;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -11,16 +15,18 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Table(name = "Station")
 public class Station {
 
-	Station(String naam){
-		this.naam = naam;
-	}
-
 	@Id
 	private String naam;
 	
 	private String code;
-	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-	private Trein[] treinen;
+	
+	@OneToMany
+	private Set<Trein> treinen;
+	
+	Station(String naam){
+		this.naam = naam;
+		this.treinen = new HashSet<>();
+	}
 	
 	public String getNaam() {
 		return naam;
@@ -38,11 +44,11 @@ public class Station {
 		this.code = code;
 	}
 
-	public Trein[] getTreinen() {
+	public Set<Trein> getTreinen() {
 		return treinen;
 	}
 
-	public void setTreinen(Trein[] treinen) {
+	public void setTreinen(Set<Trein> treinen) {
 		this.treinen = treinen;
 	}
 

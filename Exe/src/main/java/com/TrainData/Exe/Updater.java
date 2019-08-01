@@ -3,6 +3,8 @@ package com.TrainData.Exe;
 import com.TrainData.JSON.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimerTask;
 
 import org.springframework.http.*;
@@ -26,7 +28,7 @@ public class Updater extends TimerTask {
 	// HANDLES ALL THE FUNCTIONS NEEDED TO GET TRAIN DATA AND SEND IT TO OUR OWN
 	// DATABASE
 	void updateAlleTreinen(String time, String station) {
-		Trein[] trein;
+		Set<Trein> trein;
 		Arrivals[] arrivals = CRUDStationTreinen(time, station);
 		trein = this.station.getTreinen();
 		trein = handelUpdatesEnNieuweTreinen(arrivals, trein);
@@ -35,28 +37,36 @@ public class Updater extends TimerTask {
 
 	// CONTROLS ALL THE TRAINS IT FOUND FROM THE NS API AND SHOWS IF THEY ARE NEW TO
 	// THE PROGRAM AND WEITHER THEIR TIMES HAVE BEEN UPDATED
-	private Trein[] handelUpdatesEnNieuweTreinen(Arrivals[] arrivals, Trein[] trein) {
-		if (trein == null) {
-			trein = new Trein[1];
-			trein[0] = new Trein("demo Trein", "demo Origin", new String[] { LocalDateTime.now().toString() },
-					new String[] { LocalDateTime.now().toString() });
+	private Set<Trein> handelUpdatesEnNieuweTreinen(Arrivals[] arrivals, Set<Trein> treinen) {
+		if (treinen == null) {
+			treinen = new HashSet<>();
+			treinen.add(new Trein("demo Trein", "demo Origin", new String[] { LocalDateTime.now().toString() },
+					new String[] { LocalDateTime.now().toString() }));
 		}
 		boolean updates = false;
 		for (int i = 0; i < arrivals.length; i++) {
-			if (!trein[0].getNaam().equals("demo Trein")) {
+			boolean demoTrein = false;
+			if (treinen.size() == 1) {
+				for(Trein trein: treinen) {
+					if (trein.getNaam().equals("demo Trein")) {
+						demoTrein = true;
+					}
+				}
+			}
+			if (demoTrein) {
 				boolean nieuweTrein = true;
-				for (int j = 0; j < trein.length; j++) {
-					if (arrivals[i].getName().equals(trein[j].getNaam())
-							&& arrivals[i].getOrigin().equals(trein[j].getOrigin())) {
+				for (Trein trein: treinen) {
+					if (arrivals[i].getName().equals(trein.getNaam())
+							&& arrivals[i].getOrigin().equals(trein.getOrigin())) {
 						/* check if the actualDateTime still matches, else update */
 						nieuweTrein = false; /* Een bekende trein gevonden */
-						if (LocalDateTime.parse(trein[j].getWerkelijkeAankomsten()[0])
+						if (LocalDateTime.parse(trein.getWerkelijkeAankomsten()[0])
 								.compareTo(LocalDateTime.parse(arrivals[i].getActualDateTime())) > 0) {
 							updates = true;
-							systemOutUpdate(trein[j], arrivals[i]);
-							trein[j].setWerkelijkeAankomsten(new String[] { arrivals[i].getActualDateTime() });
+							systemOutUpdate(trein, arrivals[i]);
+							trein.setWerkelijkeAankomsten(new String[] { arrivals[i].getActualDateTime() });
 							
-							CRUDPutUpdateTreinInDatabase(trein[j]);
+							CRUDPutUpdateTreinInDatabase(trein);
 						}
 					}
 				}
@@ -64,27 +74,28 @@ public class Updater extends TimerTask {
 					/* nieuwe trein */
 					updates = true;
 					systemOutNieuwTrein(arrivals[i]);
-					Trein[] treinen = new Trein[trein.length + 1];
-					for (int n = 0; n < treinen.length; n++) {
-						if (n < trein.length) {
-							treinen[n] = trein[n];
-						} else {
-							treinen[n] = addNewTrain(arrivals[i]);
-						}
-					}
-					trein = treinen;
+					treinen.add(addNewTrain(arrivals[i]));
+//					Trein[] treinen = new Trein[trein.length + 1];
+//					for (int n = 0; n < treinen.length; n++) {
+//						if (n < trein.length) {
+//							treinen[n] = trein[n];
+//						} else {
+//							treinen[n] = addNewTrain(arrivals[i]);
+//						}
+//					}
+//					trein = treinen;
 				}
 			} else {
 				updates = true;
 				systemOutNieuwTrein(arrivals[i]);
-				trein[0] = addNewTrain(arrivals[i]);
+				treinen.add(addNewTrain(arrivals[i]));
 			}
 
 		}
 		if (!updates) {
 			System.out.println("No new updates");
 		}
-		return trein;
+		return treinen;
 	}
 
 	// GETS ALL THE TRAINS IN THE COMING 2 HOURS FROM THE NS API (REQUIRES OBJECTS
