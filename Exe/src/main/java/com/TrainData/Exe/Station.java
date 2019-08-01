@@ -1,10 +1,11 @@
 package com.TrainData.Exe;
 
-import java.util.ArrayList;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "Station")
@@ -18,7 +19,8 @@ public class Station {
 	private String naam;
 	
 	private String code;
-	private ArrayList<Trein> treinen = new ArrayList<>();
+	@JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+	private Trein[] treinen;
 	
 	public String getNaam() {
 		return naam;
@@ -36,11 +38,12 @@ public class Station {
 		this.code = code;
 	}
 
-	public ArrayList<Trein> getTreinen() {
+	public Trein[] getTreinen() {
 		return treinen;
 	}
 
-	public void setTreinen(ArrayList<Trein> treinen) {
+	public void setTreinen(Trein[] treinen) {
 		this.treinen = treinen;
 	}
+
 }
